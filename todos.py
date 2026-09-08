@@ -92,40 +92,21 @@ def list_items():
 
 
 def complete_item(item):
-    # ============================================================
-    # MODULE 3 — GAP 1 of 2. Your turn!
-    #
-    # Mark a to-do as done. The steps:
-    #   1. Find the to-do:  todo = find_todo(item)
-    #   2. If nothing matched (todo is None), return a sentence
-    #      saying you couldn't find it.
-    #   3. Set the to-do's "done" key to True.
-    #   4. Call notify_change() so the on-screen list updates.
-    #   5. Return a short sentence confirming what you did —
-    #      the agent will SPEAK whatever string you return.
-    #
-    # Stuck? The guide walks through it line by line, and the
-    # finished version lives on the `complete` branch.
-    # ============================================================
-
-    return "The complete_item function isn't built yet. That's the workshop's Module 3 — go build me!"
+    todo = find_todo(item)
+    if todo is None:
+        return f"I couldn't find anything matching \"{item}\" on the list."
+    todo["done"] = True
+    notify_change()
+    return f'Marked "{todo["text"]}" as done. Nice.'
 
 
 def delete_item(item):
-    # ============================================================
-    # MODULE 3 — GAP 2 of 2.
-    #
-    # Remove a to-do from the list entirely. The steps:
-    #   1. Find it:  todo = find_todo(item)
-    #   2. If todo is None, return a sentence saying you couldn't
-    #      find it.
-    #   3. Remove it:  todos.remove(todo)
-    #   4. Call notify_change() so the on-screen list updates.
-    #   5. Return a short confirmation sentence — the agent
-    #      speaks your return value.
-    # ============================================================
-
-    return "The delete_item function isn't built yet. It's the second gap in Module 3!"
+    todo = find_todo(item)
+    if todo is None:
+        return f"I couldn't find anything matching \"{item}\" to delete."
+    todos.remove(todo)
+    notify_change()
+    return f'Deleted "{todo["text"]}". It\'s like it never existed.'
 
 
 # --- Dispatch map: function name → handler ---
