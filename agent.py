@@ -15,6 +15,7 @@ import json
 
 from deepgram import AsyncDeepgramClient
 from deepgram.agent.v1.types import (
+    AgentV1InjectAgentMessage,
     AgentV1InjectUserMessage,
     AgentV1SendFunctionCallResponse,
     AgentV1Settings,
@@ -44,7 +45,8 @@ Rules:
 - When the user wants to add a task, call add_item. Rephrase their words into a short task if needed.
 - When they ask what's on the list or what's left, call list_items.
 - When they say they finished something, call complete_item.
-- When they want something gone, call delete_item.
+- Deleting is permanent. When the user asks to delete something, do NOT call delete_item yet. Ask them to confirm, naming the item. Call delete_item only after they have clearly said yes. If they say no, never mind, or change the subject, leave the list alone and say so.
+- When the user says undo or wants something back, call undo_delete.
 - Always confirm what you did, briefly.
 - Be warm and a little dry. You may be gently unimpressed by how long items have been on the list, but never mean, and never guilt-trip.
 - Keep responses to one or two short sentences — this is a spoken conversation.
@@ -278,11 +280,17 @@ class AgentSession:
     # FunctionCallRequest. We run the matching handler from todos.py and send
     # the result back as a FunctionCallResponse. Until that response arrives,
     # the agent has nothing to say — that silence is called "dead air".
+    # CHALLENGE "Cover the dead air": a handler may be slow (delete_item is
+    # `async` so it can be). If it hasn't answered within 400ms, have the agent
+    # fill the silence. behavior="queue" says "after whatever you're saying,
+    # not instead of it" — and unlike the default behavior it isn't refused
+    # mid-turn. Fast handlers (all of ours, normally) cancel it in time.
     async def _handle_function_calls(self, message):
         for fn in message.functions:
             handler = todos.FUNCTION_HANDLERS.get(fn.name)
             args = json.loads(fn.arguments) if fn.arguments else {}
 
+            filler = asyncio.ensure_future(self._filler_after(0.4))
             if handler is None:
                 result = f"Unknown function: {fn.name}"
             else:
@@ -292,6 +300,7 @@ class AgentSession:
                         result = await result
                 except Exception as exc:
                     result = f"Error running {fn.name}: {exc}"
+            filler.cancel()
 
             content = result if isinstance(result, str) else json.dumps(result)
 
@@ -302,6 +311,14 @@ class AgentSession:
             # ...and tell the browser, so the event log tells the whole story.
             await self._send_json(
                 {"type": "FunctionCall", "name": fn.name, "arguments": fn.arguments or "", "result": content}
+            )
+
+    async def _filler_after(self, seconds):
+        await asyncio.sleep(seconds)
+        if self._agent:
+            await self.log("system", "Function is slow — injecting filler speech")
+            await self._agent.send_inject_agent_message(
+                AgentV1InjectAgentMessage(message="One second, let me find that.", behavior="queue")
             )
 
     # --- The on-screen list ---

@@ -133,7 +133,7 @@ Prompts that work well here:
 |---|---|
 | `start` | Where the workshop begins. `add_item` and `list_items` work; `complete_item` and `delete_item` are marked gaps **you** fill in (Module 3 of the guide). |
 | `complete` | Every gap filled — the finished workshop state. Peek anytime you're stuck. |
-| `challenges` | The guide's Challenges page, solved — with a `CHALLENGES.md` that explains each one. Worth more after a real attempt than before. |
+| `challenges` | The guide's Challenges page, solved — with a `CHALLENGES.md` that explains each one. Worth more after a real attempt than before. **You are on this branch.** |
 
 You're probably on `start` right now (it's the default). To see the finished
 version: `git checkout complete`, then restart the server.
