@@ -1,0 +1,2 @@
+deepgram-sdk==7.8.0
+aiohttp>=3.9,<4
